@@ -1,0 +1,74 @@
+#!/bin/bash
+set -euxo pipefail
+exec > >(tee /var/log/memchat-bootstrap.log | logger -t memchat-bootstrap) 2>&1
+
+dnf install -y --allowerasing tar gzip curl-minimal
+
+# uv（Python 環境管理）を全ユーザー向けに配置
+curl -LsSf https://astral.sh/uv/install.sh | UV_INSTALL_DIR=/usr/local/bin sh
+
+id -u memchat >/dev/null 2>&1 || useradd --system --home /opt/memchat --shell /sbin/nologin memchat
+mkdir -p /opt/memchat/app
+
+# アプリ設定（systemd の EnvironmentFile）
+cat > /etc/memchat.env <<EOF
+AWS_REGION=${region}
+AWS_DEFAULT_REGION=${region}
+COGNITO_USER_POOL_ID=${cognito_user_pool_id}
+COGNITO_CLIENT_ID=${cognito_client_id}
+DB_SECRET_ARN=${db_secret_arn}
+DB_HOST=${db_host}
+DB_PORT=${db_port}
+DB_NAME=${db_name}
+BEDROCK_MODEL_ID=${bedrock_model_id}
+AGENTCORE_MEMORY_ID=${agentcore_memory_id}
+UV_CACHE_DIR=/opt/memchat/.uv-cache
+EOF
+chmod 640 /etc/memchat.env
+chown root:memchat /etc/memchat.env
+
+# S3 から最新のアプリを取得して依存を解決するスクリプト（初回と更新で共用）
+cat > /opt/memchat/update.sh <<'EOF'
+#!/bin/bash
+set -euo pipefail
+BUCKET="${artifact_bucket}"
+aws s3 cp "s3://$BUCKET/app.tar.gz" /tmp/app.tar.gz --region ${region}
+rm -rf /opt/memchat/app.new && mkdir -p /opt/memchat/app.new
+tar -xzf /tmp/app.tar.gz -C /opt/memchat/app.new
+rm -rf /opt/memchat/app && mv /opt/memchat/app.new /opt/memchat/app
+chown -R memchat:memchat /opt/memchat
+cd /opt/memchat/app
+sudo -u memchat env UV_CACHE_DIR=/opt/memchat/.uv-cache /usr/local/bin/uv sync --frozen --no-dev
+systemctl restart memchat
+EOF
+chmod +x /opt/memchat/update.sh
+
+cat > /etc/systemd/system/memchat.service <<'EOF'
+[Unit]
+Description=memchat (FastAPI chat app)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=memchat
+Group=memchat
+EnvironmentFile=/etc/memchat.env
+WorkingDirectory=/opt/memchat/app
+ExecStart=/opt/memchat/app/.venv/bin/uvicorn main:app --host 0.0.0.0 --port 80
+Restart=always
+RestartSec=3
+# 非 root で :80 に bind するため
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable memchat
+
+# アーティファクトが既にあれば起動（なければ後で update.sh を実行する）
+if aws s3 ls "s3://${artifact_bucket}/app.tar.gz" --region ${region} >/dev/null 2>&1; then
+  /opt/memchat/update.sh
+fi
+echo "bootstrap done"

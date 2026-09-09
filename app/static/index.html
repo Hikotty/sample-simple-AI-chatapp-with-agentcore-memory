@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>memchat</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <!-- 認証画面 -->
+  <section id="auth" class="auth hidden" aria-label="サインイン">
+    <form id="auth-form" class="auth-card">
+      <h1 class="brand">memchat</h1>
+      <p class="muted" id="auth-mode-label">アカウントにサインイン</p>
+      <label>メールアドレス
+        <input id="email" name="email" type="email" autocomplete="username" required data-testid="email" />
+      </label>
+      <label>パスワード
+        <input id="password" name="password" type="password" autocomplete="current-password" minlength="8" required data-testid="password" />
+      </label>
+      <p id="auth-error" class="error" role="alert" aria-live="polite"></p>
+      <button id="auth-submit" type="submit" class="primary" data-testid="auth-submit">サインイン</button>
+      <button id="auth-toggle" type="button" class="link" data-testid="auth-toggle">アカウントを作成する</button>
+    </form>
+  </section>
+
+  <!-- チャット画面 -->
+  <main id="chat" class="layout hidden">
+    <aside class="sidebar">
+      <button id="new-chat" class="new-chat" data-testid="new-chat">＋ 新しいチャット</button>
+      <nav id="conversations" class="conversations" aria-label="会話一覧"></nav>
+      <footer class="sidebar-footer">
+        <span id="me" class="muted ellipsis" data-testid="me"></span>
+        <button id="logout" class="link" data-testid="logout">ログアウト</button>
+      </footer>
+    </aside>
+
+    <section class="pane">
+      <header class="pane-header">
+        <span id="conv-title" class="ellipsis" data-testid="conv-title">memchat</span>
+        <span id="memory-badge" class="badge hidden" title="AgentCore Memory の長期記憶が有効です">長期記憶 ON</span>
+      </header>
+      <div id="messages" class="messages" data-testid="messages" aria-live="polite">
+        <div class="empty" id="empty-state">左の「新しいチャット」から会話を始めてください。</div>
+      </div>
+      <form id="composer" class="composer">
+        <textarea id="input" rows="1" placeholder="メッセージを入力（Enter で送信、Shift+Enter で改行）" data-testid="input" disabled></textarea>
+        <button id="send" type="submit" class="primary" data-testid="send" disabled>送信</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

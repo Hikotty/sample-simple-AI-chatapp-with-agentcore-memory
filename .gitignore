@@ -1,0 +1,24 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+terraform.tfvars
+tfplan
+*.tfplan
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.env
+
+# Node / Playwright
+node_modules/
+test-results/
+playwright-report/
+
+# Build artifacts
+app.tar.gz
+
+# OS
+.DS_Store
