@@ -6,7 +6,7 @@
 
 > A minimal ChatGPT-like chat app (FastAPI + vanilla HTML/CSS/JS on EC2, RDS for PostgreSQL, Amazon Cognito, Amazon Bedrock Claude Sonnet 5) that shows how to bolt AgentCore Memory long-term memory onto an existing app with the `IngestData` API, without creating short-term memory events and without changing where the conversation history lives.
 
-解説記事（Zenn）: [AgentCore Memory の IngestData で既存の AI チャットアプリに長期記憶を後付けしてみた](https://zenn.dev/aws_japan/articles/agentcore-memory-ingestdata)
+解説記事（Zenn）: [AgentCore Memory の IngestData API で既存の AI チャットアプリに長期記憶を後付けしてみた](https://zenn.dev/aws_japan/articles/agentcore-memory-ingestdata)
 
 ## 構成
 
